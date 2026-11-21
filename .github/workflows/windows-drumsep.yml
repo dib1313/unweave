@@ -1,0 +1,64 @@
+name: Windows DrumSep test installer
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/drumsep]
+    paths:
+      - '.github/workflows/windows-drumsep.yml'
+      - 'installer/**'
+permissions:
+  contents: write
+jobs:
+  installer:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare embedded Python and desktop runtime
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force installer/embedded/runtime, dist | Out-Null
+          Invoke-WebRequest https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip -OutFile installer/embedded/python.zip
+          Expand-Archive installer/embedded/python.zip installer/embedded/runtime -Force
+          @('python311.zip', '.', 'Lib\site-packages', '..', '', 'import site') | Set-Content installer/embedded/runtime/python311._pth -Encoding ascii
+          Invoke-WebRequest https://bootstrap.pypa.io/get-pip.py -OutFile installer/embedded/get-pip.py
+          & installer/embedded/runtime/python.exe installer/embedded/get-pip.py
+          if ($LASTEXITCODE) { throw 'pip bootstrap failed' }
+          & installer/embedded/runtime/python.exe -m pip install 'pywebview>=5,<7'
+          if ($LASTEXITCODE) { throw 'desktop runtime installation failed' }
+      - name: Build NSIS installer
+        run: |
+          choco install nsis --yes --no-progress
+          if ($LASTEXITCODE) { throw 'NSIS installation failed' }
+          Push-Location installer
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" /V3 Unweave.nsis
+          if ($LASTEXITCODE) { throw 'NSIS build failed' }
+          Pop-Location
+          Move-Item dist/Unweave-Setup-x64.exe dist/Unweave-DrumSep-Setup-x64.exe
+      - name: Smoke test installed application
+        run: |
+          $install = Join-Path $env:RUNNER_TEMP 'Unweave-installed'
+          $process = Start-Process dist/Unweave-DrumSep-Setup-x64.exe -ArgumentList '/S', "/D=$install" -Wait -PassThru
+          if ($process.ExitCode) { throw "Installer exited $($process.ExitCode)" }
+          Push-Location $env:RUNNER_TEMP
+          & "$install/runtime/python.exe" -c "import webview; from unweave.cli import parser; from unweave.audio.drum_split import DRUM_STEMS; assert len(DRUM_STEMS)==6; parser().parse_args(['split-drums','--file','drums.wav','--output','out']); print('Installed DrumSep smoke test passed')"
+          if ($LASTEXITCODE) { throw 'Installed runtime smoke test failed' }
+          Pop-Location
+          $hash = (Get-FileHash dist/Unweave-DrumSep-Setup-x64.exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  Unweave-DrumSep-Setup-x64.exe" | Set-Content dist/SHA256SUMS.txt -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Unweave-DrumSep-Windows-x64
+          path: dist/*
+          if-no-files-found: error
+      - name: Publish test download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "drumsep-test-$env:GITHUB_RUN_NUMBER"
+          $notes = 'Experimental Windows x64 installer from feature/drumsep. Separate a song with Drums enabled, then click Split drum kit on its Drums track. The first use downloads about 438 MB. Unsigned test build; audio quality and desktop behavior need user testing. Uses the same install/data directories as upstream Unweave.'
+          gh release create $tag dist/Unweave-DrumSep-Setup-x64.exe dist/SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --prerelease --title "DrumSep Windows test $env:GITHUB_RUN_NUMBER" --notes $notes
+          if ($LASTEXITCODE) { throw 'Release publication failed; download the workflow artifact instead' }
