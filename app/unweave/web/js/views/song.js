@@ -190,7 +190,7 @@ export function renderSong() {
   const stemsReady = store.stemsReady.has(project.id) && hasStems && !busyHere;
   $('reveal').classList.toggle('stems-ready', stemsReady);
   $('stems-ready-hint').hidden = !stemsReady || stemsHintSeen();
-  document.querySelectorAll('[data-split-guitar]').forEach(button => { button.disabled = busyHere; });
+  document.querySelectorAll('[data-split-guitar], [data-split-drums]').forEach(button => { button.disabled = busyHere; });
   const exported = store.exportPending && findJob(store.exportPending.jobId);
   if (exported && exported.project === store.selected) {
     if (exported.status === 'succeeded' && store.exportOffered !== exported.id) {

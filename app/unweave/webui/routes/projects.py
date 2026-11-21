@@ -49,6 +49,13 @@ def register(router, library):
             library.require_matching_root(data.get("root"))
             return library.start(id, "guitar", guitar_split=True, trim=data.get("trim"))
 
+    @router.post("/api/projects/{id}/split-drums")
+    def split_drums(req, query, id, **_):
+        with library.lock:
+            data = req.json_body()
+            library.require_matching_root(data.get("root"))
+            return library.start_drum_split(id)
+
     @router.post("/api/projects/{id}/export")
     def export(req, query, id, **_):
         with library.lock:

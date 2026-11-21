@@ -27,7 +27,18 @@ ARTIFACTS = {
     "UVR_MDXNET_KARA_2.onnx": (_UVR + "UVR_MDXNET_KARA_2.onnx",
         "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4"),
 }
+DRUM_MODEL = "MDX23C-DrumSep-aufr33-jarredou.ckpt"
+DRUM_CONFIG = "config_drumsep_mdx23c.yaml"
+_DRUM_BASE = ("https://huggingface.co/Politrees/UVR_resources/resolve/"
+              "491e44cfaf909b73ce14f6185298de9c82867de3/MDX23C_models/")
+ARTIFACTS.update({
+    DRUM_MODEL: (_DRUM_BASE + DRUM_MODEL,
+        "d2a4aa53eb584d21eead358a4e66d1882ad182911be018f052b5da73be9096d0"),
+    DRUM_CONFIG: (_DRUM_BASE + DRUM_CONFIG,
+        "17d1649a227f841165bdb4c11a42082898192a1ea3ceab7e7e0b9293d6589dd6"),
+})
 BUILTIN_MODELS = {
+    DRUM_MODEL: ("MDXC", (DRUM_MODEL, DRUM_CONFIG)),
     "htdemucs_6s.yaml": ("Demucs", ("htdemucs_6s.yaml", "5c90dfd2-34c22ccb.th")),
     "htdemucs.yaml": ("Demucs", ("htdemucs.yaml", "955717e8-8726e21a.th")),
     "UVR_MDXNET_KARA_2.onnx": ("MDX", ("UVR_MDXNET_KARA_2.onnx",)),
@@ -154,6 +165,6 @@ def create_separator(**settings):
                 cached_download(url, Path(self.model_file_dir) / name, digest)
             self.model_friendly_name = model_filename
             self.model_is_uvr_vip = False
-            return model_filename, model_type, model_filename, str(Path(self.model_file_dir) / model_filename), None
+            return model_filename, model_type, model_filename, str(Path(self.model_file_dir) / model_filename), (str(Path(self.model_file_dir) / DRUM_CONFIG) if model_filename == DRUM_MODEL else None)
 
     return CachedSeparator(**settings)

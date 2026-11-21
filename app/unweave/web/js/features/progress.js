@@ -135,7 +135,7 @@ export function renderProgress(panel, job) {
     sub = running ? t('export.phase.workingSub') : job.error || (job.status === 'succeeded' ? t('export.phase.readySub') : '');
   } else {
     const titles = {prepare: job.guitar_split ? t('sep.phase.prepareGuitar') : t('sep.phase.prepareNormal'), load: job.phase === 'download' ? t('sep.phase.downloadModel') : t('sep.phase.loadModel'),
-      download: t('sep.phase.downloadYoutube'), separate: job.guitar_split ? t('sep.phase.separateGuitar') : t('sep.phase.separateNormal'),
+      download: t('sep.phase.downloadYoutube'), separate: job.drum_split ? t('drums.running') : job.guitar_split ? t('sep.phase.separateGuitar') : t('sep.phase.separateNormal'),
       guitar: t('sep.phase.splitGuitar'), finalize: youtube ? t('sep.phase.finalizeYoutube') : t('sep.phase.finalizeNormal')};
     const subs = {prepare: t('sep.sub.prepare'), load: job.phase === 'download' ? t('sep.sub.loadDownloading') : t('sep.sub.load'),
       download: t('sep.sub.download'), separate: t('sep.sub.separate'), guitar: t('sep.sub.splitGuitar'), finalize: t('sep.sub.finalize')};

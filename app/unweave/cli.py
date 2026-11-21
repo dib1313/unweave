@@ -41,6 +41,10 @@ def parser() -> argparse.ArgumentParser:
     guitar.add_argument("--cache", type=Path, default=Path(".sound-razor/models"))
     guitar.add_argument("--replace-source", action="store_true",
                         help="Remove the guitar stem after a whole split, or mute the split section in it (it must be in --output)")
+    drums = commands.add_parser("split-drums", help="Split an existing drum stem into six kit pieces")
+    drums.add_argument("--file", type=Path, required=True)
+    drums.add_argument("--output", type=Path, required=True)
+    drums.add_argument("--cache", type=Path, default=Path(".sound-razor/models"))
     export = commands.add_parser("export", help="Copy project stems into other formats")
     export.add_argument("--project", type=Path, required=True)
     export.add_argument("--formats", nargs="+", choices=tuple(FORMATS), default=["flac"])
@@ -65,6 +69,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "split-guitar":
             from .audio.guitar_split import split_guitar
             result = [str(path) for path in split_guitar(args.file, args.output, args.cache, trim, args.replace_source)]
+        elif args.command == "split-drums":
+            from .audio.drum_split import split_drums
+            result = [str(path) for path in split_drums(args.file, args.output, args.cache)]
         elif args.command == "export":
             from .audio.exports import export_stems
             from .projects import describe_project

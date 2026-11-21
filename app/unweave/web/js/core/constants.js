@@ -4,7 +4,7 @@ export const ORIGINAL_COLOR = '#9aa3b2';
 // literal text, so labels stay in sync when the language is switched at runtime.
 export const STEMS = [['vocals', 'stem.vocals', '#ff8a3d'], ['drums', 'stem.drums', '#5ec8ff'], ['bass', 'stem.bass', '#b48cff'],
   ['guitar', 'stem.guitar', '#4fe0a8'], ['piano', 'stem.piano', '#ffd166'], ['other', 'stem.other', '#ff6f91']];
-export const STEM_LABEL_KEYS = {vocals: 'stem.vocals', drums: 'stem.drums', bass: 'stem.bass', guitar: 'stem.guitar', piano: 'stem.piano', other: 'stem.other', instrumental: 'stem.instrumental', lead: 'stem.lead', rhythm: 'stem.rhythm'};
+export const STEM_LABEL_KEYS = {vocals: 'stem.vocals', drums: 'stem.drums', bass: 'stem.bass', guitar: 'stem.guitar', piano: 'stem.piano', other: 'stem.other', instrumental: 'stem.instrumental', lead: 'stem.lead', rhythm: 'stem.rhythm', kick: 'stem.kick', snare: 'stem.snare', toms: 'stem.toms', hh: 'stem.hh', ride: 'stem.ride', crash: 'stem.crash'};
 // Split outputs: not model stems, so they live outside STEMS (the quick grid and
 // the request payload are built from STEMS alone).
 export const LEAVES = [['lead', 'stem.lead', '#4fe0a8'], ['rhythm', 'stem.rhythm', '#7ef0c6']];

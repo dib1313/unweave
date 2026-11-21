@@ -4,7 +4,7 @@ import {t, onLangChange} from '../core/i18n.js';
 /* ---------- job queue dialog (opened from the job pill) ---------- */
 export function jobWhat(job) {
   return job.kind === 'youtube' ? t('nav.downloading') : job.kind === 'setup' ? t('nav.settingUp')
-    : job.kind === 'export' ? t('nav.exporting') : job.guitar_split ? t('nav.splittingGuitar') : t('nav.separating');
+    : job.kind === 'export' ? t('nav.exporting') : job.drum_split ? t('drums.running') : job.guitar_split ? t('nav.splittingGuitar') : t('nav.separating');
 }
 function jobTitle(job) {
   const project = store.state.projects.find(p => p.id === job.project);

@@ -248,7 +248,7 @@ class JobQueueMixin:
             if kind == "separate":
                 self._separate(job, job["_project"], job["_original"], job["_stems"],
                                job.get("_group"), job.get("_split_leaves", False), job["_trim"])
-            elif kind == "split-guitar":
+            elif kind in {"split-guitar", "split-drums"}:
                 self._separate(job, job["_project"], job["_original"], job["_stems"],
                                None, False, job["_trim"])
             elif kind == "youtube":
@@ -266,6 +266,32 @@ class JobQueueMixin:
                 if not self.active:
                     self.process = None
             self._job_done.set()
+
+    def start_drum_split(self, identifier):
+        from ..audio.drum_split import DRUM_STEMS
+        with self.lock:
+            project = project_path(self.require_root(), identifier)
+            info = describe_project(project)
+            directory = project / "stems"
+            drum = stem_file(directory, "drums")
+            if not drum or drum not in {s["file"] for s in info["stems"]}:
+                raise ValueError("Separate the drums track first.")
+            if directory.is_symlink() or any(p.is_symlink() or not p.is_file() for p in directory.iterdir()):
+                raise ValueError("The stems folder must contain regular files only.")
+            if any((directory / f"{name}{ext}").exists() for name in DRUM_STEMS for ext in (".flac", ".wav")):
+                raise ValueError("This project already contains drum pieces.")
+            # Copy of the whole folder, six 24-bit outputs, plus inference temporary WAVs.
+            pcm = probe_duration(directory / drum) * PCM_BYTES_PER_SECOND
+            disk_need = sum(p.stat().st_size for p in directory.iterdir()) + pcm * 24
+            require_free_space(project, disk_need)
+            job = {"id": uuid.uuid4().hex, "kind": "split-drums", "project": identifier,
+                   "status": "queued", "started": time.time(), "finished": None, "error": None,
+                   "drum_split": True, "stems": list(DRUM_STEMS), "group": [],
+                   "phase": "prepare", "progress": 0, "step_progress": 0,
+                   "eta": None, "step_eta": None, "pass_count": 1, "pass_index": 1,
+                   "_project": project, "_original": info["original"],
+                   "_stems": list(DRUM_STEMS), "_trim": None, "_disk_need": disk_need}
+            return self._enqueue(job)
 
     def start(self, identifier: str, preset: str, stems=None, *, group=None,
               split_leaves=False, guitar_split=False, trim=None):
@@ -548,6 +574,21 @@ class JobQueueMixin:
         # A native crash (torch/onnxruntime access violation) otherwise kills the CLI with
         # no traceback; faulthandler prints the Python stack into the job log first.
         python = [sys.executable, "-X", "faulthandler"]
+        if job["kind"] == "split-drums":
+            # Revalidate after waiting in the queue, before copying user files.
+            from ..audio.drum_split import DRUM_STEMS
+            directory = project / 'stems'
+            info = describe_project(project)
+            drum = stem_file(directory, 'drums')
+            if directory.is_symlink() or any(p.is_symlink() or not p.is_file() for p in directory.iterdir()):
+                raise ValueError("The stems folder must contain regular files only.")
+            if not drum or drum not in {s['file'] for s in info['stems']}:
+                raise ValueError("Separate the drums track first.")
+            if any((directory / f'{name}{ext}').exists() for name in DRUM_STEMS for ext in ('.flac', '.wav')):
+                raise ValueError("This project already contains drum pieces.")
+            shutil.copytree(directory, stage)
+            return [*python, '-m', 'unweave', 'split-drums',
+                    '--file', str(stage / drum), '--output', str(stage), '--cache', str(self.cache)]
         if job["kind"] == "split-guitar":
             shutil.copytree(project / 'stems', stage)
             return [*python, '-m', 'unweave', 'split-guitar',
