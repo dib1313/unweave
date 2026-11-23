@@ -147,3 +147,41 @@ repository is limited to the maintainer; open pull requests from a fork.
 MIT License - See [LICENSE](LICENSE) file for details.
 
 Original Sound Razor is also MIT licensed by pedromtcosta.
+
+## Drum kit separation (this fork)
+
+After separating a song with **Drums** enabled, open it in the library and click
+**Split drum kit** under the Drums track. Confirm **Separate drum pieces** to run
+MDX23C DrumSep. This is optional: ordinary separation and guitar splitting never
+load or download DrumSep.
+
+The first requested drum split downloads about 438 MB of weights and its YAML
+configuration; subsequent runs reuse the verified cache and can run offline.
+Progress, cancellation and logs use the existing job queue. The six tracks are
+**Kick, Snare, Toms, Hi-hat, Ride and Crash**, available in the player and the
+normal export dialog. The original drums file is retained on disk but hidden
+from the mixer/export listing once all six pieces exist, avoiding double playback.
+A failed or cancelled job leaves the previous project unchanged.
+
+This version splits the **whole existing drums stem**, including a previously
+trimmed song's stem. The six outputs inherit its project timeline offset. There
+is no separate drum-range editor or automatic drum split on initial import.
+The six predictions do not necessarily sum exactly to the original drums.
+
+Developer install: use the existing `.[full]` instructions. DrumSep requires
+`audio-separator>=0.48.0,<0.49` for multi-stem MDXC output; both project manifests
+include that requirement. On an older installation, use **Settings → Components →
+Repair** after installing this fork. Merely installing upstream's official release
+does not include this fork's changes. An updated Windows installer is not bundled
+with this source branch.
+
+Model: **MDX23C-DrumSep-aufr33-jarredou**, by aufr33 and jarredou,
+[hosted by Politrees](https://huggingface.co/Politrees/UVR_resources/tree/491e44cfaf909b73ce14f6185298de9c82867de3/MDX23C_models).
+The hosting repository declares MIT; it contains no additional checkpoint-specific
+license text. Both URLs are pinned to that revision, and both files are checked
+against SHA-256 before loading (see `audio/model_cache.py`). Weights are downloaded
+on demand rather than committed to this repository.
+
+A short synthetic-audio smoke test validates inference and file handling, not
+separation quality on real songs. Runtime depends strongly on the CPU/GPU and
+track duration. Test your own music before relying on the result.

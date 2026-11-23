@@ -29,7 +29,7 @@ dependencies = [
 # These used to point at a nonexistent external "unweave[...]" package (a packaging bug),
 # so `.[separation]` could never actually be installed. Declared directly here instead.
 separation = [
-    "audio-separator>=0.24",
+    "audio-separator>=0.48.0,<0.49",
     "onnxruntime>=1.17",
     "torch>=2.1",
     "audioread>=3.0",

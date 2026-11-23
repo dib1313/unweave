@@ -156,6 +156,9 @@ def describe_project(path: Path) -> dict:
         labels.update({"guitar-target": split[0]["title"], "guitar-remainder": "Guitar remainder"})
     if stems_dir.is_dir() and not stems_dir.is_symlink():
         order = {name: i for i, name in enumerate(("vocals", "guitar", "bass", "drums", "piano", "other", "instrumental", "lead", "rhythm"))}
+        from ..audio.drum_split import DRUM_STEMS
+        order.update({name: 3 + (i + 1) / 10 for i, name in enumerate(DRUM_STEMS)})
+        labels['hh'] = 'Hi-hat'
         order.update({f"guitar-target-{i}": 1 + i / (len(split) + 2) for i in range(1, len(split or []) + 1)})
         order["guitar-remainder"] = 1.99
         for p in sorted(stems_dir.iterdir(), key=lambda p: (order.get(p.stem, 99), p.name)):
@@ -167,6 +170,10 @@ def describe_project(path: Path) -> dict:
             # A section split now mutes that section in the guitar instead, so the muted
             # guitar stays on screen next to lead and rhythm. Older splits left the guitar
             # whole, and showing it would play the section twice.
+            if stem_name == 'drums' and separation.get('drum_split'):
+                from ..audio.drum_split import DRUM_STEMS
+                if all((stems_dir / f'{name}.flac').is_file() for name in DRUM_STEMS):
+                    continue
             if stem_name == 'guitar':
                 superseded = False
                 lead_rhythm = separation.get('lead_rhythm_split')

@@ -10,6 +10,7 @@ export const CREDITS = [
   ['about.models', [
     ['Demucs (htdemucs_6s)', 'Meta AI', 'MIT', 'https://github.com/facebookresearch/demucs'],
     ['UVR MDX-Net Karaoke 2', 'Ultimate Vocal Remover', 'MIT', 'https://github.com/Anjok07/ultimatevocalremovergui'],
+    ['DrumSep MDX23C', 'aufr33 / jarredou (Politrees mirror)', 'MIT (hosting repository)', 'https://huggingface.co/Politrees/UVR_resources'],
     ['Lead/rhythm guitar', 'listra92 / noblebarkrr', null, 'https://huggingface.co/noblebarkrr/mvsepless_resources'],
   ]],
   ['about.builtWith', [

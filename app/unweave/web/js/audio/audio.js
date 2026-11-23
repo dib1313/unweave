@@ -1,6 +1,6 @@
 import {colors, ORIGINAL_COLOR, STEMS, ORIGINAL_FILE} from '../core/constants.js';
-import {$, el, token, time, notice, jobPending, projectJob, projectUrl, stemLabel} from '../core/core.js';
-import {store} from '../core/store.js';
+import {$, el, token, time, notice, api, jobPending, projectJob, projectUrl, stemLabel} from '../core/core.js';
+import {store, nav} from '../core/store.js';
 import {StemPlayer} from './player.js';
 import {openSplitDialog} from './split.js';
 import {formatClock} from './trim.js';
@@ -212,6 +212,36 @@ export function renderTracks() {
       const projectId = store.selected;
       split.onclick = () => { player.pause(); openSplitDialog(projectId, track); };
       label.querySelector('.track-name').append(split);
+    }
+    if (!isOriginal && stemName === 'drums') {
+      const split = el('button', 'btn btn-ghost btn-sm', t('drums.action'));
+      split.type = 'button'; split.dataset.splitDrums = '';
+      split.disabled = jobPending(projectJob(store.selected));
+      const projectId = store.selected;
+      split.onclick = () => {
+        player.pause();
+        const dialog = el('dialog', 'dialog');
+        const title = el('h2', '', t('drums.action'));
+        title.id = 'drum-dialog-title'; dialog.setAttribute('aria-labelledby', title.id);
+        const body = el('p', '', t('drums.description'));
+        const errorText = el('p'); errorText.setAttribute('role', 'alert');
+        const cancel = el('button', 'btn btn-ghost', t('drums.cancel'));
+        const submit = el('button', 'btn btn-primary', t('drums.start'));
+        cancel.type = submit.type = 'button';
+        cancel.onclick = () => dialog.close();
+        submit.onclick = async () => {
+          submit.disabled = true;
+          try {
+            await api(`${projectUrl(projectId)}/split-drums`, {root: store.state.root});
+            dialog.close(); await nav.refresh();
+          } catch (error) { errorText.textContent = error.message; submit.disabled = false; }
+        };
+        const content = el('div', 'dialog-body');
+        content.append(title, body, errorText, cancel, submit); dialog.append(content);
+        dialog.addEventListener('close', () => dialog.remove(), {once: true});
+        document.body.append(dialog); dialog.showModal();
+      };
+      label.append(split);
     }
     const wave = el('div', 'wave-wrap'); const canvas = el('canvas'); canvas.setAttribute('aria-hidden', 'true');
     wave.append(canvas, el('span', 'playhead'));

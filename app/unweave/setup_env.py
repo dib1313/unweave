@@ -6,6 +6,7 @@ already uses for separation jobs — no new frontend plumbing.
 """
 
 import importlib.util
+import importlib.metadata
 import os
 import platform
 import re
@@ -192,7 +193,12 @@ def torch_ok() -> bool:
 def separation_ok() -> bool:
     # audio_separator can appear installed while torch is only half extracted;
     # the module check alone made that look like a healthy setup.
-    return importlib.util.find_spec("audio_separator") is not None and torch_ok()
+    try:
+        version = tuple(int(x) for x in importlib.metadata.version("audio-separator").split(".")[:2])
+    except (importlib.metadata.PackageNotFoundError, ValueError):
+        return False
+    return (version >= (0, 48) and version < (0, 49)
+            and importlib.util.find_spec("audio_separator") is not None and torch_ok())
 
 
 # Floor matching pyproject youtube extra. Older builds hit YouTube HTTP 400
